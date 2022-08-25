@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { fonts, myDimensi } from '../../utils/fonts';
 import { Icon } from 'react-native-elements';
+import { colors } from '../../utils/colors';
 
 export default function MyButton({
   title,
@@ -13,7 +14,7 @@ export default function MyButton({
   fontWeight = 'normal',
   iconColor = 'white',
   borderSize = 0,
-  borderColor = 'red',
+  borderColor = colors.primary,
 }) {
   return (
     <TouchableOpacity

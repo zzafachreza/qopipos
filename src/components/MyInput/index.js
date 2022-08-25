@@ -21,6 +21,8 @@ export default function MyInput({
   label2,
   paddingLeft = 30,
   styleLabel,
+  height = 40,
+  onSubmitEditing,
   nolabel = false,
   colorIcon = colors.primary,
 }) {
@@ -46,13 +48,13 @@ export default function MyInput({
         }}>
           <Icon type='ionicon' name={iconname} size={myDimensi / 3} color={colors.primary} />
         </View>}
-        <TextInput autoFocus={autoFocus} autoCapitalize='none' value={value} onChangeText={onChangeText}
+        <TextInput onSubmitEditing={onSubmitEditing} autoFocus={autoFocus} autoCapitalize='none' value={value} onChangeText={onChangeText}
           keyboardType={keyboardType}
           style={{
             borderWidth: 1,
             borderColor: colors.border_form,
             borderRadius: 10,
-            height: 40,
+            height: height,
             fontSize: myDimensi / 5,
             paddingLeft: paddingLeft,
             paddingTop: 10,

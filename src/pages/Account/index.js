@@ -1,13 +1,14 @@
 import { FlatList, Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { colors } from '../../utils/colors'
-import { apiURL, getData, urlToken } from '../../utils/localStorage';
+import { apiURL, getData, storeData, urlToken } from '../../utils/localStorage';
 import { fonts, myDimensi, windowHeight, windowWidth } from '../../utils/fonts';
 import { Icon } from 'react-native-elements'
 import axios from 'axios';
 import 'intl';
 import 'intl/locale-data/jsonp/en';
-export default function Account() {
+import { MyButton } from '../../components';
+export default function Account({ navigation }) {
     const [user, setUser] = useState({});
     useEffect(() => {
         getData('user').then(u => {
@@ -26,7 +27,7 @@ export default function Account() {
             <View style={{
                 flexDirection: 'row',
                 backgroundColor: colors.primary,
-                height: windowHeight / 15,
+                height: windowHeight / 5,
 
                 padding: 10,
             }}>
@@ -71,6 +72,17 @@ export default function Account() {
                     }} />
                 </TouchableOpacity>
 
+            </View>
+
+            <View style={{
+                flex: 1,
+                justifyContent: 'center',
+                paddingHorizontal: 100,
+            }}>
+                <MyButton Icons="log-out" onPress={() => {
+                    storeData('user', null);
+                    navigation.replace('Login')
+                }} title="Keluar" warna={colors.black} />
             </View>
 
         </SafeAreaView>
