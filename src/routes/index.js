@@ -19,7 +19,10 @@ import {
   RegisterSuccess,
   Wish,
   History,
-  Account
+  Account,
+  CartEdit,
+  Payment,
+  TransactionDetail
 } from '../pages';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BottomNavigator } from '../components';
@@ -33,7 +36,6 @@ const MainApp = () => {
     <Tab.Navigator tabBar={props => <BottomNavigator {...props} />}>
       <Tab.Screen name="Home" component={Home} />
       <Tab.Screen name="History" component={History} />
-      <Tab.Screen name="Wish" component={Wish} />
       <Tab.Screen name="Account" component={Account} />
     </Tab.Navigator>
   );
@@ -88,6 +90,31 @@ export default function Router() {
       <Stack.Screen
         name="Product"
         component={Product}
+        options={{
+          headerShown: false,
+        }}
+      />
+
+
+      <Stack.Screen
+        name="CartEdit"
+        component={CartEdit}
+        options={{
+          headerShown: false,
+        }}
+      />
+
+      <Stack.Screen
+        name="Payment"
+        component={Payment}
+        options={{
+          headerShown: false,
+        }}
+      />
+
+      <Stack.Screen
+        name="TransactionDetail"
+        component={TransactionDetail}
         options={{
           headerShown: false,
         }}

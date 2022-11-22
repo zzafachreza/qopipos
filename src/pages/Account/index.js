@@ -1,92 +1,137 @@
-import { FlatList, Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { colors } from '../../utils/colors'
-import { apiURL, getData, storeData, urlToken } from '../../utils/localStorage';
-import { fonts, myDimensi, windowHeight, windowWidth } from '../../utils/fonts';
-import { Icon } from 'react-native-elements'
+import React, { useEffect, useState } from 'react';
+import {
+    StyleSheet,
+    Text,
+    View,
+    SafeAreaView,
+    Image,
+    Linking,
+    Alert,
+    ActivityIndicator,
+} from 'react-native';
+import { windowWidth, fonts } from '../../utils/fonts';
+import { getData, storeData, urlAPI, urlApp, urlAvatar } from '../../utils/localStorage';
+import { colors } from '../../utils/colors';
+import { MyButton, MyGap } from '../../components';
+import { Icon } from 'react-native-elements';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { useIsFocused } from '@react-navigation/native';
 import axios from 'axios';
-import 'intl';
-import 'intl/locale-data/jsonp/en';
-import { MyButton } from '../../components';
-export default function Account({ navigation }) {
+
+export default function Account({ navigation, route }) {
     const [user, setUser] = useState({});
+    const [com, setCom] = useState({});
+    const isFocused = useIsFocused();
+    const [wa, setWA] = useState('');
+    const [open, setOpen] = useState(false);
+
+
+
     useEffect(() => {
-        getData('user').then(u => {
-            setUser(u)
-        });
-    }, []);
 
 
+        if (isFocused) {
+            getData('user').then(res => {
+
+                setOpen(true);
+                setUser(res);
+
+            });
+        }
+
+
+
+
+    }, [isFocused]);
+
+    const btnKeluar = () => {
+        Alert.alert('Qopi untuk semua', 'Apakah kamu yakin akan keluar ?', [
+            {
+                text: 'Batal',
+                style: "cancel"
+            },
+            {
+                text: 'Keluar',
+                onPress: () => {
+                    storeData('user', null);
+
+                    navigation.replace('Login');
+                }
+            }
+        ])
+    };
+
+    const MyList = ({ label, value }) => {
+        return (
+            <View
+                style={{
+                    marginVertical: 3,
+                    padding: 5,
+                    backgroundColor: colors.white,
+                    borderRadius: 5,
+                }}>
+                <Text
+                    style={{
+                        fontFamily: fonts.secondary[600],
+                        color: colors.black,
+                    }}>
+                    {label}
+                </Text>
+                <Text
+                    style={{
+                        fontFamily: fonts.secondary[400],
+                        color: colors.primary,
+                    }}>
+                    {value}
+                </Text>
+            </View>
+        )
+    }
     return (
         <SafeAreaView style={{
             flex: 1,
-            backgroundColor: colors.white
+            padding: 10
         }}>
 
-            {/* header */}
-            <View style={{
-                flexDirection: 'row',
-                backgroundColor: colors.primary,
-                height: windowHeight / 5,
-
-                padding: 10,
-            }}>
-                <View style={{
-                    flex: 1,
-                }}>
-                    <Text style={{
-                        fontFamily: fonts.primary[600],
-                        fontSize: myDimensi / 2,
-                        color: colors.white
-                    }}>Akun Saya</Text>
-                </View>
-                <TouchableOpacity style={{
-                    marginHorizontal: 10,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}>
-                    <Image source={require('../../assets/cart_white.png')} style={{
-                        width: 20,
-                        height: 20,
-                    }} />
-                </TouchableOpacity>
-
-                <TouchableOpacity style={{
-                    marginHorizontal: 15,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}>
-                    <Image source={require('../../assets/bell_white.png')} style={{
-                        width: 16,
-                        height: 20
-                    }} />
-                </TouchableOpacity>
-
-                <TouchableOpacity style={{
-                    marginHorizontal: 15,
-                }}>
-                    <Image source={require('../../assets/face.png')} style={{
-                        width: myDimensi / 1,
-                        height: myDimensi / 1,
-                        borderRadius: 5,
-                    }} />
-                </TouchableOpacity>
-
-            </View>
-
-            <View style={{
+            {!open && <View style={{
                 flex: 1,
                 justifyContent: 'center',
-                paddingHorizontal: 100,
+                alignItems: 'center'
             }}>
-                <MyButton Icons="log-out" onPress={() => {
-                    storeData('user', null);
-                    navigation.replace('Login')
-                }} title="Keluar" warna={colors.black} />
-            </View>
+                <ActivityIndicator size="large" color={colors.primary} />
+            </View>}
 
-        </SafeAreaView>
-    )
+            {open && <>
+
+
+                {/* data detail */}
+                <View style={{ padding: 10, flex: 1 }}>
+                    <MyList label="Nama Outlet" value={user.nama_outlet} />
+                    <MyList label="Alamat Outlet" value={user.alamat_outlet} />
+                    <MyList label="Nama Lengkap" value={user.nama_lengkap} />
+                    <MyList label="Email" value={user.email} />
+                    <MyList label="Telepon / Whatsapp" value={user.telepon} />
+
+                </View>
+                <View style={{ padding: 10, flexDirection: 'row', justifyContent: 'space-around' }}>
+
+                    <View style={{
+                        flex: 1,
+                    }}>
+                        <MyButton
+                            onPress={btnKeluar}
+                            title="Keluar"
+                            colorText={colors.white}
+                            iconColor={colors.white}
+                            warna={colors.black}
+                            Icons="log-out-outline"
+                        />
+                    </View>
+
+                </View>
+            </>}
+        </SafeAreaView >
+    );
 }
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({});

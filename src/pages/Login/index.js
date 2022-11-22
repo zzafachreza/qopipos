@@ -83,7 +83,7 @@ export default function Login({ navigation }) {
             fontSize: myDimensi / 3,
             color: colors.border_label,
             marginBottom: 5,
-          }}>Username</Text>
+          }}>Email</Text>
 
           <View style={{
             position: 'relative'
@@ -95,11 +95,11 @@ export default function Login({ navigation }) {
               alignItems: 'center',
               height: '100%', padding: 10,
             }}>
-              <Icon type='ionicon' name='at-outline' size={myDimensi / 2.5} color={colors.primary} />
+              <Icon type='ionicon' name='mail-outline' size={myDimensi / 2.5} color={colors.primary} />
             </View>
-            <TextInput autoCapitalize='none' value={kirim.username} onChangeText={v => setKirim({
+            <TextInput autoCapitalize='none' value={kirim.email} onChangeText={v => setKirim({
               ...kirim,
-              username: v
+              email: v
             })}
 
               style={{
@@ -111,7 +111,7 @@ export default function Login({ navigation }) {
                 paddingTop: 12,
                 fontFamily: fonts.primary.normal
               }}
-              placeholder="Masukan username"
+              placeholder="Masukan email"
             />
           </View>
 

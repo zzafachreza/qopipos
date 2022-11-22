@@ -10,15 +10,17 @@ import 'intl/locale-data/jsonp/en';
 import Modal from 'react-native-modal'
 import { MyButton, MyGap, MyInput } from '../../components';
 
+import { useIsFocused } from '@react-navigation/native';
+import { TextInput } from 'react-native';
 
-export default function Home({ route, params }) {
+
+export default function Home({ navigation, route }) {
   const [modalProduct, setModalProduct] = useState(false)
   const [user, setUser] = useState({});
   const [loading, setLoading] = useState(false);
   const [kategori, setKategori] = useState([]);
   const [produk, setProduk] = useState([]);
   const [cart, setCart] = useState([]);
-
   const [add, setAdd] = useState({
     topping: {
       pilih: '',
@@ -63,29 +65,67 @@ export default function Home({ route, params }) {
     sugar_data: '',
     catatan: ''
   });
+  const [total, setTotal] = useState(0);
+  const [data, setData] = useState([]);
 
-
+  const isFocused = useIsFocused();
   const toggleProduct = () => {
     setModalProduct(!modalProduct);
   };
 
   useEffect(() => {
-    getData('user').then(u => {
-      setUser(u)
-    });
+
+    if (isFocused) {
+      getData('user').then(u => {
+        setUser(u)
+        __getDataBarang(u.id);
+      });
+    }
+
     getProduk();
     getKategori();
-  }, []);
+  }, [isFocused]);
 
 
   const getKategori = () => {
     axios.post(apiURL + 'v1_kategori.php', {
       api_token: urlToken,
     }).then(res => {
-      console.log(res.data);
       setKategori(res.data);
     })
   }
+
+
+  const __getDataBarang = (zz) => {
+    axios.post(apiURL + '/v1_cart.php', {
+      fid_user: zz
+    }).then(x => {
+      setData(x.data);
+      console.log('data cart', x.data);
+      let sub = 0;
+      x.data.map((i, key) => {
+        sub += parseFloat(i.total);
+
+      });
+      setTotal(sub);
+    })
+
+  }
+
+  const hanldeHapus = (x) => {
+    axios.post(apiURL + '/v1_cart_delete.php', {
+      id_cart: x,
+      api_token: urlToken
+    }).then(xx => {
+
+      console.log(xx.data);
+      getData('user').then(tkn => {
+        __getDataBarang(tkn.id);
+        setLoading(false);
+      });
+
+    })
+  };
 
   const [openKategori, setOpenKategori] = useState(true);
 
@@ -99,7 +139,6 @@ export default function Home({ route, params }) {
       key: key
     }).then(res => {
       setLoading(false);
-      console.log(res.data);
       setProduk(res.data);
     })
   }
@@ -141,19 +180,20 @@ export default function Home({ route, params }) {
   const __renderItem = ({ item }) => {
     return (
       <TouchableOpacity onPress={() => {
-        setModalProduct(true);
-        setShowProduct({
-          qty: 1,
-          topping: 0,
-          topping_data: '',
-          sugar_data: '',
-          sugar: 0,
-          nama_barang: item.nama_barang,
-          harga_barang: item.harga_barang,
-          diskon: item.diskon,
-          fid_barang: item.id,
-          catatan: ''
-        })
+        // setModalProduct(true);
+        // setShowProduct({
+        //   qty: 1,
+        //   topping: 0,
+        //   topping_data: '',
+        //   sugar_data: '',
+        //   sugar: 0,
+        //   nama_barang: item.nama_barang,
+        //   harga_barang: item.harga_barang,
+        //   diskon: item.diskon,
+        //   fid_barang: item.id,
+        //   catatan: ''
+        // })
+        navigation.navigate('Product', item)
       }} style={{
         flex: 0.3,
         marginVertical: 5,
@@ -256,36 +296,168 @@ export default function Home({ route, params }) {
       </TouchableOpacity>
     )
   }
+  const __renderItemCart = ({ item, index }) => {
 
-  const MyAdd = ({ x, y }) => {
-    if (x > 0) {
+    let jumlah = item.qty;
+    return (
 
-      var eLL = [];
-      for (let i = 0; i < x; i++) {
-        eLL.push(
+      <View style={{
+        flexDirection: 'row',
+        paddingRight: 10,
+      }}>
 
-          <Text style={{
+        <View style={{ padding: 10, flex: 1, borderBottomWidth: 1, borderBottomColor: colors.border_form }}>
+          <View style={{
+            flex: 1,
+          }}>
+            <Text
+              style={{
+                fontFamily: fonts.secondary[600],
+                fontSize: myDimensi / 5,
+              }}>
+              {item.nama_barang} x {item.qty}
+            </Text>
+            <Text
+              style={{
+                fontFamily: fonts.secondary[400],
+                fontSize: myDimensi / 5.5,
+                color: colors.border_label
+              }}>
+              {item.ukuran}, {item.suhu} {item.data_topping == '' ? '' : ', ' + item.data_topping} {item.catatan !== '' ? ', ' + item.catatan : ''}
+            </Text>
+          </View>
 
-            fontFamily: fonts.primary[400],
-            fontSize: myDimensi / 5,
-            color: colors.border_label
+          <Text
+            style={{
 
-          }}>{cart[y].additional[i].nama_tambahan} - Rp. {new Intl.NumberFormat().format((cart[y].additional[i].harga_tambahan))}</Text>
-         ,
-        );
-      }
-      return <>{eLL}</>;
-    } else {
-      return (<></>);
-    }
+              fontFamily: fonts.primary[600],
+              color: colors.black,
+              fontSize: myDimensi / 4,
+            }}>
+            Rp. {new Intl.NumberFormat().format(item.total)}
+          </Text>
+        </View>
+        <View style={{ flex: 1, borderBottomWidth: 1, borderBottomColor: colors.border_form }}>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('CartEdit', item)
+              console.warn(item)
+            }}
+            style={{
+              width: 25,
+              alignSelf: 'flex-end',
+              marginVertical: 5,
+            }}>
+            <Icon type='ionicon' name='create-outline' color={colors.secondary_base} size={myDimensi / 3} solid />
+          </TouchableOpacity>
+          <View style={{
+            flexDirection: 'row',
+            paddingRight: 0,
+            justifyContent: 'flex-end'
+          }}>
+            <TouchableOpacity onPress={() => {
 
-    // if (x > 0) {
+              if (item.qty == 1) {
+                setLoading(true);
+                hanldeHapus(item.id);
+              } else {
+                setLoading(true);
+                console.warn('barang', item.id + item.qty)
+                axios.post(apiURL + 'v1_cart_update.php', {
+                  api_token: urlToken,
+                  id: item.id,
+                  qty: parseFloat(item.qty) - 1
+                }).then(res => {
+                  console.log(res.data);
+                  __getDataBarang(user.id);
+                  setLoading(false);
+                })
+              }
+
+            }} style={{
+
+
+              backgroundColor: colors.primary,
+              // borderRadius: 5,
+              width: 25,
+              height: 25,
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              <Icon type='ionicon' name='remove' color={colors.white} />
+            </TouchableOpacity>
+            <View style={{
+              height: 25,
+              paddingHorizontal: 10,
+              borderTopWidth: 1,
+              borderBottomWidth: 1,
+              borderTopColor: colors.primary,
+              borderBottomColor: colors.primary,
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              <TextInput onChangeText={x => {
+                let items = [...data];
+                let item = { ...items[index] };
+                item.qty = x;
+                items[index] = item;
+                console.log(items);
+                setData(items);
+
+                if (x > 0) {
+
+                  axios.post(apiURL + 'v1_cart_update.php', {
+                    api_token: urlToken,
+                    id: item.id,
+                    qty: parseFloat(item.qty)
+                  }).then(res => {
+                    console.log(res.data);
+                    __getDataBarang(user.id);
+                    setLoading(false);
+                  })
+
+
+                }
 
 
 
-    // }
+              }} keyboardType='number-pad' value={item.qty} style={{
+                padding: 0,
+                fontSize: myDimensi / 5,
+                textAlign: 'center',
+                fontFamily: fonts.secondary[600]
+              }} />
+            </View>
+            <TouchableOpacity onPress={() => {
+              setLoading(true);
+              console.warn('barang', item.id + item.qty)
+              axios.post(apiURL + 'v1_cart_update.php', {
+                api_token: urlToken,
+                id: item.id,
+                qty: parseFloat(item.qty) + 1
+              }).then(res => {
+                console.log(res.data);
+                __getDataBarang(user.id);
+                setLoading(false);
+              })
+            }} style={{
+              backgroundColor: colors.primary,
+              // borderRadius: 5,
+              width: 25,
+              height: 25,
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              <Icon type='ionicon' name='add' color={colors.white} />
+            </TouchableOpacity>
+          </View>
 
-  }
+        </View>
+      </View>
+
+
+    );
+  };
 
   return (
 
@@ -404,259 +576,16 @@ export default function Home({ route, params }) {
             }}>Tambah Pelanggan</Text>
           </TouchableOpacity>
         </View>
-        {/* list transaksi produk */}
+        {/* list transaksi produk cart */}
         <ScrollView style={{
           flex: 1,
           backgroundColor: colors.white,
         }} showsVerticalScrollIndicator={false}>
-          {cart.map((i, index) => {
 
-            let topping = 0;
-
-            totalBiaya += i.harga_barang;
-            return (
-              <View style={{
-                marginHorizontal: 10,
-                marginVertical: 5,
-                padding: 10,
-                flexDirection: 'row'
-              }}>
-                <View style={{
-                  flex: 1
-                }}>
-                  <Text style={{
-                    fontFamily: fonts.primary[600],
-                    fontSize: myDimensi / 5,
-                    marginBottom: 5,
-                    color: colors.black
-                  }}>{i.nama_barang}</Text>
-
-
-                  {i.topping_data.length > 0 && <Text style={{
-
-                    fontFamily: fonts.primary[400],
-                    fontSize: myDimensi / 5,
-                    color: colors.border_label
-
-                  }}>{i.topping_data} Rp {new Intl.NumberFormat().format(i.topping)}</Text>}
-
-
-                  {i.sugar_data.length > 0 && <Text style={{
-                    fontFamily: fonts.primary[400],
-                    fontSize: myDimensi / 5,
-                    color: colors.border_label
-                  }}>{i.sugar_data} Rp {new Intl.NumberFormat().format(i.sugar)}</Text>}
-
-                  {i.catatan.length > 0 && <Text style={{
-
-                    fontFamily: fonts.primary[400],
-                    fontSize: myDimensi / 5,
-                    color: colors.border_label
-                  }}>{i.catatan}</Text>}
-
-                </View>
-                <View>
-                  <Text style={{
-                    fontFamily: fonts.primary.normal,
-                    fontSize: myDimensi / 5,
-                    marginBottom: 5,
-                    color: colors.black
-                  }}>x{i.qty}</Text>
-                </View>
-                <View style={{
-                  flex: 1,
-                  alignItems: 'flex-end',
-                  justifyContent: 'flex-start',
-                }}>
-                  <Text style={{
-                    fontFamily: fonts.primary.normal,
-                    fontSize: myDimensi / 5,
-                    marginBottom: 5,
-                    color: colors.black
-                  }}>Rp. {new Intl.NumberFormat().format((i.harga_barang * i.qty))}</Text>
-                </View>
-                <TouchableOpacity onPress={() => {
-                  console.log(index);
-
-                  let result = cart.filter((i, x) => x != index);
-                  console.log(result);
-
-                  setCart(result);
-
-
-                }} style={{
-                  justifyContent: 'flex-start',
-                  alignItems: 'center',
-                  marginHorizontal: 3,
-                }}>
-                  <Icon type='ionicon' name='close' color={colors.danger} size={myDimensi / 3} />
-                </TouchableOpacity>
-              </View>
-            )
-          })}
-
-
-          {/* Diskon */}
-
-          <View style={{
-            marginHorizontal: 10,
-            marginTop: 5,
-            paddingVertical: 5,
-            paddingHorizontal: 10,
-            flexDirection: 'row'
-          }}>
-            <View style={{
-              flex: 1
-            }}>
-              <Text style={{
-                fontFamily: fonts.primary[600],
-                fontSize: myDimensi / 5,
-                marginBottom: 5,
-                color: colors.black
-              }}>Diskon :</Text>
-            </View>
-
-            <View style={{
-              flex: 1,
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-              paddingRight: 25,
-            }}>
-              <Text style={{
-                fontFamily: fonts.primary.normal,
-                fontSize: myDimensi / 5,
-                marginBottom: 5,
-                color: colors.black
-              }}>( Rp. {new Intl.NumberFormat().format(0)} )</Text>
-            </View>
-
-          </View>
-
-          {/* subtotal */}
-
-          <View style={{
-            marginHorizontal: 10,
-            marginTop: 5,
-            paddingVertical: 5,
-            paddingHorizontal: 10,
-            flexDirection: 'row'
-          }}>
-            <View style={{
-              flex: 1
-            }}>
-              <Text style={{
-                fontFamily: fonts.primary[600],
-                fontSize: myDimensi / 5,
-                marginBottom: 5,
-                color: colors.black
-              }}>Subtotal :</Text>
-            </View>
-
-            <View style={{
-              flex: 1,
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-              paddingRight: 25,
-            }}>
-              <Text style={{
-                fontFamily: fonts.primary.normal,
-                fontSize: myDimensi / 5,
-                marginBottom: 5,
-                color: colors.black
-              }}>Rp. {new Intl.NumberFormat().format(totalBiaya)}</Text>
-            </View>
-
-          </View>
-
-          {/* PPN */}
-          <View style={{
-            marginHorizontal: 10,
-            paddingHorizontal: 10,
-            flexDirection: 'row'
-          }}>
-            <View style={{
-              flex: 1
-            }}>
-              <Text style={{
-                fontFamily: fonts.primary[400],
-                fontSize: myDimensi / 5,
-                marginBottom: 5,
-                color: colors.border_label
-              }}>PPN (Termasuk)</Text>
-            </View>
-          </View>
-          {/* Total */}
-          <View style={{
-            marginHorizontal: 10,
-            marginTop: 5,
-
-            paddingHorizontal: 10,
-            flexDirection: 'row'
-          }}>
-            <View style={{
-              flex: 1
-            }}>
-              <Text style={{
-                fontFamily: fonts.primary[600],
-                fontSize: myDimensi / 5,
-                marginBottom: 5,
-                color: colors.black
-              }}>Total :</Text>
-            </View>
-
-            <View style={{
-              flex: 1,
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-              paddingRight: 25,
-            }}>
-              <Text style={{
-                fontFamily: fonts.primary.normal,
-                fontSize: myDimensi / 5,
-                marginBottom: 5,
-                color: colors.black
-              }}>Rp. {new Intl.NumberFormat().format(totalBiaya)}</Text>
-            </View>
-
-          </View>
-
-          {/* Rounding */}
-
-          <View style={{
-            marginHorizontal: 10,
-            marginTop: 5,
-            paddingVertical: 5,
-            paddingHorizontal: 10,
-            flexDirection: 'row'
-          }}>
-            <View style={{
-              flex: 1
-            }}>
-              <Text style={{
-                fontFamily: fonts.primary.normal,
-                fontSize: myDimensi / 5,
-                marginBottom: 5,
-                color: colors.border_label
-              }}>Rounding :</Text>
-            </View>
-
-            <View style={{
-              flex: 1,
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-              paddingRight: 25,
-            }}>
-              <Text style={{
-                fontFamily: fonts.primary.normal,
-                fontSize: myDimensi / 5,
-                marginBottom: 5,
-                color: colors.border_label
-              }}>( Rp. {new Intl.NumberFormat().format(0)} )</Text>
-            </View>
-
-          </View>
-
+          <FlatList data={data} renderItem={__renderItemCart} />
         </ScrollView>
+
+        {/* ditail */}
         <View style={{
           flex: 0.5,
           backgroundColor: colors.border_card
@@ -717,233 +646,50 @@ export default function Home({ route, params }) {
                 color: colors.white
               }}>Pisah Bill</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={{
-              borderLeftWidth: 1,
-              backgroundColor: colors.primary,
-              flex: 1,
-              paddingVertical: 20,
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'row'
-            }}>
+            <TouchableOpacity
+              onPress={() => {
+                const dd = {
+                  fid_user: user.id,
+                  fid_outlet: user.fid_outlet,
+                  harga_total: total,
+                  diskon_voucher: 0,
+                  persen_voucher: 0,
+                  diskon_member: 0,
+                  persen_member: 0,
+
+
+                }
+                console.warn(dd)
+
+                setTimeout(() => {
+                  setLoading(false);
+                  navigation.navigate('Payment', dd)
+                }, 1200)
+              }}
+
+              style={{
+
+                borderLeftWidth: 1,
+                backgroundColor: colors.primary,
+                flex: 1,
+                paddingVertical: 20,
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'row'
+              }}>
               <Icon size={myDimensi / 3} name='wallet' type='ionicon' color={colors.white} />
               <Text style={{
                 left: 10,
                 fontFamily: fonts.primary.normal,
                 fontSize: myDimensi / 3,
                 color: colors.white
-              }}>Bayar Rp. {new Intl.NumberFormat().format(totalBiaya)}</Text>
+              }}>Bayar Rp. {new Intl.NumberFormat().format(total)}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
 
-      {/* modal product */}
-      <Modal isVisible={modalProduct}>
-        <View style={{ flex: 1, padding: 10, backgroundColor: colors.white }}>
 
-          <View style={{
-            marginBottom: 10,
-            flexDirection: 'row',
-            borderBottomWidth: 1,
-            paddingBottom: 10,
-            borderBottomColor: colors.border_form
-          }}>
-            <View style={{ flex: 1, }}>
-              <MyButton Icons="close" iconColor={colors.primary} onPress={toggleProduct} title="Batal" borderSize={1} colorText={colors.primary} />
-            </View>
-            <View style={{ flex: 2, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{
-                fontFamily: fonts.primary[600],
-                fontSize: myDimensi / 4,
-                color: colors.black
-              }}>{showProduct.nama_barang}</Text>
-              <Text style={{
-                fontFamily: fonts.primary[400],
-                fontSize: myDimensi / 3,
-                color: colors.black
-              }}>Rp {new Intl.NumberFormat().format((showProduct.harga_barang * showProduct.qty) + showProduct.topping + showProduct.sugar)}</Text>
-            </View>
-            <View style={{ flex: 1, }}>
-              <MyButton onPress={() => {
-                console.log(showProduct);
-
-                let arr = cart;
-
-                arr = [...arr, showProduct];
-
-                console.warn('arr', arr);
-                setCart(arr);
-                setAdd({
-                  ...add,
-                  topping: {
-                    data: add.topping.data,
-                    pilih: ''
-                  },
-                  sugar: {
-                    data: add.sugar.data,
-                    pilih: ''
-                  }
-                })
-                setModalProduct(false)
-
-
-              }} Icons="cart" title="Simpan" warna={colors.primary} />
-            </View>
-          </View>
-
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* jumlah */}
-            <View style={{
-              flexDirection: 'row'
-            }}>
-              <View style={{
-                flex: 1,
-              }}>
-                <MyInput keyboardType='number-pad' value={showProduct.qty.toString()} onChangeText={x => {
-                  setQty(parseFloat(x))
-                }} height={50} nolabel placeholder="Jumlah" paddingLeft={20} iconLeft={false} iconname='cube' />
-              </View>
-              <View style={{
-                flex: 1,
-                flexDirection: 'row',
-                paddingHorizontal: 10,
-              }}>
-                <View style={{ flex: 1, }}>
-                  <MyButton onPress={() => {
-
-                    setShowProduct({
-                      ...showProduct, qty: parseFloat(showProduct.qty) - 1
-                    })
-                  }} title="-" warna={colors.white} borderSize={1} colorText={colors.primary} />
-                </View>
-                <View style={{ flex: 1, }}>
-                  <MyButton onPress={() => {
-                    setShowProduct({
-                      ...showProduct, qty: parseFloat(showProduct.qty) + 1
-                    })
-
-                  }} title="+" warna={colors.primary} />
-                </View>
-
-              </View>
-            </View>
-            <MyGap jarak={10} />
-
-
-
-            {/* topping */}
-            <Text style={{
-              fontFamily: fonts.primary[600],
-              fontSize: myDimensi / 4,
-              color: colors.black
-            }}>TOPPING</Text>
-            <View style={{
-              flexDirection: 'row'
-            }}>
-              <View style={{
-                flex: 1,
-                flexDirection: 'row',
-                paddingHorizontal: 10,
-                justifyContent: 'space-around'
-              }}>
-
-                {add.topping.data.map((i, index) => {
-
-                  return (
-                    <View style={{ flex: 1, margin: 2 }}>
-                      <MyButton onPress={() => {
-
-                        console.log(i.label);
-                        setShowProduct({
-                          ...showProduct,
-                          topping: i.harga,
-                          topping_data: i.label
-                        })
-                        setAdd({
-                          ...add,
-                          topping: {
-                            data: add.topping.data,
-                            pilih: i.label
-                          }
-                        })
-                        console.log('pilih', add.topping.pilih)
-
-                      }} title={i.label} warna={add.topping.pilih == i.label ? colors.primary : colors.white} borderSize={1} colorText={add.topping.pilih == i.label ? colors.white : colors.primary} />
-                    </View>
-
-                  )
-                })}
-
-              </View>
-            </View>
-
-
-            {/* sugar */}
-            <Text style={{
-              fontFamily: fonts.primary[600],
-              fontSize: myDimensi / 4,
-              color: colors.black
-            }}>SUGAR LEVEL</Text>
-            <View style={{
-              flexDirection: 'row'
-            }}>
-              <View style={{
-                flex: 1,
-                flexDirection: 'row',
-                paddingHorizontal: 10,
-                justifyContent: 'space-around'
-              }}>
-
-                {add.sugar.data.map((i, index) => {
-
-                  return (
-                    <View style={{ flex: 1, margin: 2 }}>
-                      <MyButton onPress={() => {
-
-                        console.log(i.label);
-                        setAdd({
-                          ...add,
-                          sugar: {
-                            data: add.sugar.data,
-                            pilih: i.label
-                          }
-                        })
-
-                        setShowProduct({
-                          ...showProduct,
-                          sugar: i.harga,
-                          sugar_data: i.label
-                        })
-                        console.log('pilih', add.sugar.pilih)
-
-                      }} title={i.label} warna={add.sugar.pilih == i.label ? colors.primary : colors.white} borderSize={1} colorText={add.sugar.pilih == i.label ? colors.white : colors.primary} />
-                    </View>
-
-                  )
-                })}
-
-              </View>
-            </View>
-
-            {/* Catatan */}
-            <Text style={{
-              fontFamily: fonts.primary[600],
-              fontSize: myDimensi / 4,
-              color: colors.black
-            }}>CATATAN</Text>
-            <MyInput onChangeText={x => {
-              setShowProduct({
-                ...showProduct,
-                catatan: x
-              })
-            }} value={showProduct.catatan} iconname="create" multiline nolabel placeholder="masukan deskripsi" height={50} />
-
-
-          </ScrollView>
-
-        </View>
-      </Modal>
     </SafeAreaView>
   )
 }

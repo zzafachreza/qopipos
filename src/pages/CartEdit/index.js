@@ -1,4 +1,4 @@
-import { FlatList, Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Animated, Text, TouchableOpacity, View, TouchableWithoutFeedback } from 'react-native'
+import { FlatList, Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Animated, Text, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { colors } from '../../utils/colors'
 import { apiURL, getData, urlToken } from '../../utils/localStorage';
@@ -10,34 +10,64 @@ import 'intl/locale-data/jsonp/en';
 import { ImageBackground } from 'react-native';
 import { MyInput } from '../../components';
 import LottieView from 'lottie-react-native'
-import { showMessage } from 'react-native-flash-message';
 
 
-export default function Product({ navigation, route }) {
+export default function CartEdit({ navigation, route }) {
 
     const item = route.params;
     const [loading, setLoading] = useState(false);
-
+    console.warn('topping', route.params.topping)
     const [barang, setBarang] = useState({
         fid_barang: route.params.id,
+        id_cart: route.params.id,
         harga_barang: route.params.harga_barang,
         harga_dasar: route.params.harga_dasar,
         diskon: route.params.diskon,
-        qty: 1,
+        qty: route.params.qty,
+        catatan: route.params.catatan,
         total_topping: 0,
         suhu: 'Cold',
         ukuran: 'Regular',
         gula: 'Normal',
         es: 'Normal',
-        topping: []
+        topping: [],
+        total_topping: parseFloat(route.params.total_topping)
     })
+
+    const updateTopping = (fid_tambahan, nama_tambahan, harga_tambahan, foto_tambahan, jenis) => {
+
+        if (jenis == 1) {
+            // alert('insert' + fid_tambahan);
+            axios.post(apiURL + 'v1_topping_add.php', {
+                api_token: urlToken,
+                kode: route.params.kode,
+                fid_tambahan: fid_tambahan,
+                nama_tambahan: nama_tambahan,
+                harga_tambahan: harga_tambahan,
+                foto_tambahan: foto_tambahan
+            }).then(res => {
+                console.log(res.data)
+            })
+        } else {
+            // alert('delete' + fid_tambahan);
+            axios.post(apiURL + 'v1_topping_delete.php', {
+                api_token: urlToken,
+                kode: route.params.kode,
+                fid_tambahan: fid_tambahan,
+            }).then(res => {
+                console.log(res.data)
+            })
+        }
+
+    }
 
     useEffect(() => {
         getTopping();
     }, [])
     const getTopping = () => {
-        axios.post(apiURL + 'v1_topping.php', {
+        axios.post(apiURL + 'v1_topping_edit.php', {
             api_token: urlToken,
+            kode: route.params.kode,
         }).then(res => {
             console.log('topping', res.data);
             setTopping(res.data);
@@ -47,12 +77,12 @@ export default function Product({ navigation, route }) {
         {
             id: 0,
             name: 'Cold',
-            pilih: 1,
+            pilih: route.params.suhu == 'Cold' ? 1 : 0,
         },
         {
             id: 1,
             name: 'Hot',
-            pilih: 0,
+            pilih: route.params.suhu == 'Hot' ? 1 : 0,
         }
     ])
 
@@ -61,17 +91,17 @@ export default function Product({ navigation, route }) {
         {
             id: 0,
             name: 'Regular',
-            pilih: 1,
+            pilih: route.params.ukuran == 'Regular' ? 1 : 0,
         },
         {
             id: 1,
             name: 'Medium',
-            pilih: 0,
+            pilih: route.params.ukuran == 'Medium' ? 1 : 0,
         },
         {
             id: 2,
             name: 'Large',
-            pilih: 0,
+            pilih: route.params.ukuran == 'Large' ? 1 : 0,
         }
     ])
 
@@ -79,17 +109,17 @@ export default function Product({ navigation, route }) {
         {
             id: 0,
             name: 'Normal',
-            pilih: 1,
+            pilih: route.params.gula == 'Normal' ? 1 : 0,
         },
         {
             id: 1,
             name: 'Less',
-            pilih: 0,
+            pilih: route.params.gula == 'Less' ? 1 : 0,
         },
         {
             id: 2,
             name: 'No Sugar',
-            pilih: 0,
+            pilih: route.params.gula == 'No Sugar' ? 1 : 0,
         }
     ]);
 
@@ -101,24 +131,20 @@ export default function Product({ navigation, route }) {
         {
             id: 0,
             name: 'Normal',
-            pilih: 1,
+            pilih: route.params.es == 'Normal' ? 1 : 0,
         },
         {
             id: 1,
             name: 'Less',
-            pilih: 0,
+            pilih: route.params.es == 'Less' ? 1 : 0,
         },
         {
             id: 2,
             name: 'No Ice',
-            pilih: 0,
+            pilih: route.params.es == 'No Ice' ? 1 : 0,
         }
     ])
 
-    // Animated.timing(scaleLogo, {
-    //     toValue: 200,
-    //     duration: 800,
-    // }).start();
 
     return (
         <>
@@ -126,7 +152,6 @@ export default function Product({ navigation, route }) {
                 flex: 1,
                 backgroundColor: colors.white
             }}>
-
 
                 <TouchableOpacity style={{
                     justifyContent: 'flex-start',
@@ -142,7 +167,6 @@ export default function Product({ navigation, route }) {
                         left: 5,
                     }}>Kembali</Text>
                 </TouchableOpacity>
-
 
                 <View style={{
                     marginVertical: 5,
@@ -498,7 +522,7 @@ export default function Product({ navigation, route }) {
                                 item.pilih = item.pilih == 1 ? 0 : 1;
                                 items[index] = item;
                                 let filter = items.filter((x, i) => x.pilih === 1);
-
+                                updateTopping(items[index].fid_tambahan, items[index].nama_tambahan, items[index].harga_tambahan, items[index].foto_tambahan, items[index].pilih)
                                 setTopping(items);
                                 console.log(filter);
                                 let total_topping = 0;
@@ -577,6 +601,12 @@ export default function Product({ navigation, route }) {
                 padding: 10,
                 backgroundColor: colors.white
             }}>
+                <Text style={{
+                    fontFamily: fonts.primary[600],
+                    fontSize: myDimensi / 4,
+                    color: colors.black,
+                    marginVertical: 10,
+                }}>Simpan Perubahan</Text>
 
                 <TouchableOpacity onPress={() => {
 
@@ -586,9 +616,10 @@ export default function Product({ navigation, route }) {
                             navigation.replace('Login')
                         } else {
 
-                            console.log(barang);
+                            // console.log(barang);
                             let kirim = barang;
                             kirim.fid_user = user.id;
+                            kirim.kode = route.params.kode;
                             kirim.api_token = urlToken;
                             console.warn('send server', kirim);
 
@@ -599,23 +630,16 @@ export default function Product({ navigation, route }) {
 
                             setTimeout(() => {
 
-                                axios.post(apiURL + 'v1_cart_add.php', kirim).then(res => {
-                                    console.log(res.data);
+                                axios.post(apiURL + 'v1_cart_update_all.php', kirim).then(res => {
+
                                     setLoading(false);
 
-                                    if (res.data.status === 404) {
-                                        showMessage({
-                                            type: 'danger',
-                                            message: res.data.message
-                                        })
-                                    } else if (res.data.status === 200) {
+                                    navigation.goBack();
 
-                                        navigation.goBack()
 
-                                    }
                                 })
 
-                            }, 1200)
+                            }, 100)
 
 
 
@@ -636,19 +660,12 @@ export default function Product({ navigation, route }) {
                             marginBottom: 5,
                             color: colors.white
                         }}>Total</Text>
-                        {/* <Text style={{
-                            fontFamily: fonts.primary[600],
-                            fontSize: myDimensi / 1.5,
-                            marginBottom: 5,
-                            color: colors.white
-                        }}>Rp. {new Intl.NumberFormat().format((barang.harga_barang + barang.total_topping) * barang.qty)}</Text> */}
-
                         <Text style={{
                             fontFamily: fonts.primary[600],
                             fontSize: myDimensi / 3,
                             marginBottom: 5,
                             color: colors.white
-                        }}>Rp. {new Intl.NumberFormat().format((parseFloat(barang.harga_barang) + barang.total_topping) * barang.qty)}</Text>
+                        }}>Rp. {new Intl.NumberFormat().format((barang.harga_barang + barang.total_topping) * barang.qty)}</Text>
                     </View>
                     <View style={{
                         justifyContent: 'center',
