@@ -29,11 +29,15 @@ import { Modalize } from 'react-native-modalize';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { color } from 'react-native-elements/dist/helpers';
 
+import ThermalPrinterModule from 'react-native-thermal-printer';
+
 export default function TransactionDetail({ navigation, route }) {
 
 
-    const [loading, setLoading] = useState(false);
 
+
+    const [textPrint, setTextPrint] = useState({
+    });
     const isFocused = useIsFocused();
     const [user, setUser] = useState({});
 
@@ -43,16 +47,7 @@ export default function TransactionDetail({ navigation, route }) {
             __getTransactionDetail(route.params.inv);
             __getTransactionStatus(route.params.inv);
         }
-
-
     }, [isFocused]);
-
-
-
-
-    const printData = async () => {
-
-    }
 
 
     const __getTransaction = (inv) => {
@@ -62,8 +57,44 @@ export default function TransactionDetail({ navigation, route }) {
         }).then(res => {
             // console.log(res.data);
             setHeader(res.data);
+            setTextPrint({
+                ...textPrint,
+                header:
+                    `[L]<b>${res.data.nama_outlet}</b>\n\n` +
+                    `[L]${res.data.alamat_outlet}\n` +
+                    `[L]--------------------------------\n` +
+                    `[L]${res.data.tanggal_jam}\n` +
+                    `[L]Order ID     : ${res.data.inv}\n` +
+                    `[L]Collected By : qp coffee\n` +
+                    `[L]--------------------------------\n` +
+                    `[L]            <b>*dine in*</b>\n\n` +
 
-        });
+                    `[L]<b>1x Hot Qopi Latte</b>      <b>@11,200</b>\n` +
+                    `[L]Regular,Cold, + Cendol\n` +
+
+                    `[L]<b>2x Es Qopi Cendol</b>      <b>@36,200</b>\n` +
+                    `[L]Regular,Hot\n` +
+
+                    `[L]<b>1x Es Qopi Cincau</b>      <b>@21,000</b>\n` +
+                    `[L]Regular,Cold, + Marie Regal\n` +
+                    `[L]--------------------------------\n` +
+                    `[L]Subtotal               @68,200\n` +
+                    `[L]PPN (Included)\n` +
+                    `[L]--------------------------------\n` +
+                    `[L]<b>Total               @68,200</b>\n` +
+                    `[L]--------------------------------\n` +
+                    `[L]Cash                        <b>@0</b>\n` +
+                    `[L]Change                      <b>@0</b>\n` +
+                    `[L]--------------------------------\n` +
+                    `[L]qopi-coffee.com                    \n` +
+                    `[L]qpcoffee.id                        \n` +
+                    `[L]qpcoffee.id                        \n`
+                ,
+
+
+
+            })
+        })
     }
 
 
@@ -84,9 +115,7 @@ export default function TransactionDetail({ navigation, route }) {
             api_token: urlToken
         }).then(res => {
             // console.log(res.data);
-            setDatail(res.data);
-
-
+            setDatail(res.data)
         })
     }
 
@@ -517,8 +546,21 @@ export default function TransactionDetail({ navigation, route }) {
                 padding: 10,
                 backgroundColor: colors.white
             }}>
-                {!loading && <MyButton onPress={printData} title="Print Pesanan" Icons="print-outline" warna={colors.primary} />}
-                {loading && <ActivityIndicator size="large" color={colors.primary} />}
+                <MyButton onPress={async () => {
+                    // inside async function
+                    try {
+                        await ThermalPrinterModule.printBluetooth({
+                            payload: textPrint.header,
+                            printerNbrCharactersPerLine: 10
+
+                        });
+
+
+                    } catch (err) {
+                        //error handling
+                        console.log(err.message);
+                    }
+                }} title="Print Pesanan" Icons="print-outline" warna={colors.primary} />
             </View>
 
 

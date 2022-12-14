@@ -22,7 +22,9 @@ import {
   Account,
   CartEdit,
   Payment,
-  TransactionDetail
+  TransactionDetail,
+  PrinterBluetooth,
+  PrinterNetwork
 } from '../pages';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BottomNavigator } from '../components';
@@ -152,6 +154,22 @@ export default function Router() {
         component={RegisterSuccess}
         options={{
           headerShown: false,
+        }}
+      />
+
+
+      <Stack.Screen
+        name="PrinterBluetooth"
+        component={PrinterBluetooth}
+        options={{
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="PrinterNetwork"
+        component={PrinterNetwork}
+        options={{
+          headerShown: true,
         }}
       />
 

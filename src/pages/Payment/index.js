@@ -50,7 +50,7 @@ export default function Payment({ navigation, route }) {
                     return false
                 }}
                 injectedJavaScript={injectScript}
-                onMessage={onMessage} source={{ uri: apiURL + 'v1_payment.php?fid_user=' + user.id + '&fid_outlet=' + user.fid_outlet + '&diskon_voucher=' + route.params.diskon_voucher + '&persen_voucher=' + route.params.persen_voucher + '&diskon_member=' + route.params.diskon_member + '&persen_member=' + route.params.persen_member + '&tanggal_pickup=' + route.params.tanggal_pickup + '&jam_pickup=' + route.params.jam_pickup }} />
+                onMessage={onMessage} source={{ uri: apiURL + 'v1_payment.php?fid_user=' + user.id + '&fid_outlet=' + user.fid_outlet + '&diskon_voucher=' + route.params.diskon_voucher + '&persen_voucher=' + route.params.persen_voucher + '&diskon_member=' + route.params.diskon_member + '&persen_member=' + route.params.persen_member + '&tanggal_pickup=' + route.params.tanggal_pickup + '&jam_pickup=' + route.params.jam_pickup + '&jenis=' + route.params.jenis + '&fid_pelanggan=' + route.params.fid_pelanggan }} />
         </SafeAreaView>
     )
 }

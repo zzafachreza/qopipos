@@ -13,7 +13,8 @@ import Account from './Account';
 import CartEdit from './CartEdit';
 import Payment from './Payment';
 import TransactionDetail from './TransactionDetail';
-
+import PrinterBluetooth from './PrinterBluetooth';
+import PrinterNetwork from './PrinterNetwork';
 
 
 
@@ -34,6 +35,8 @@ export {
   Wish,
   Account,
   CartEdit,
-  Payment
+  Payment,
+  PrinterBluetooth,
+  PrinterNetwork
 
 };

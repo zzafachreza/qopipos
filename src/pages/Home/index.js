@@ -15,8 +15,18 @@ import { TextInput } from 'react-native';
 
 
 export default function Home({ navigation, route }) {
-  const [modalProduct, setModalProduct] = useState(false)
+  const [modalProduct, setModalProduct] = useState(false);
+  const [bukapelanggan, setBukaPelanggan] = useState(false);
   const [user, setUser] = useState({});
+  const [jenis, setJenis] = useState('Dine in');
+  const [pelanggan, setPelanggan] = useState({
+    nama_lengkap: null,
+    email: null,
+    alamat: null,
+    telepon: null,
+    id_pelanggan: null,
+  });
+  const [dataPelanggan, setDataPelanggan] = useState([]);
   const [loading, setLoading] = useState(false);
   const [kategori, setKategori] = useState([]);
   const [produk, setProduk] = useState([]);
@@ -81,7 +91,7 @@ export default function Home({ navigation, route }) {
         __getDataBarang(u.id);
       });
     }
-
+    getPelanggan();
     getProduk();
     getKategori();
   }, [isFocused]);
@@ -96,12 +106,21 @@ export default function Home({ navigation, route }) {
   }
 
 
+  const getPelanggan = () => {
+    axios.post(apiURL + 'v1_pelanggan.php', {
+      api_token: urlToken,
+    }).then(res => {
+      setDataPelanggan(res.data);
+
+    })
+  }
+
+
   const __getDataBarang = (zz) => {
     axios.post(apiURL + '/v1_cart.php', {
       fid_user: zz
     }).then(x => {
       setData(x.data);
-      console.log('data cart', x.data);
       let sub = 0;
       x.data.map((i, key) => {
         sub += parseFloat(i.total);
@@ -537,7 +556,13 @@ export default function Home({ navigation, route }) {
           justifyContent: 'space-between',
           padding: 10,
         }}>
-          <TouchableOpacity style={{
+          <TouchableOpacity onPress={() => {
+            if (jenis == 'Dine in') {
+              setJenis('Take away');
+            } else {
+              setJenis('Dine in');
+            }
+          }} style={{
             marginLeft: 10,
             paddingVertical: 2,
             padding: 10,
@@ -554,9 +579,9 @@ export default function Home({ navigation, route }) {
               marginTop: 3,
               marginLeft: 5,
               color: colors.primary
-            }}>Dine in</Text>
+            }}>{jenis}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={{
+          <TouchableOpacity onPress={() => setBukaPelanggan(true)} style={{
             marginLeft: 10,
             paddingVertical: 2,
             padding: 10,
@@ -573,7 +598,7 @@ export default function Home({ navigation, route }) {
               marginTop: 3,
               marginLeft: 5,
               color: colors.primary
-            }}>Tambah Pelanggan</Text>
+            }}>{pelanggan.nama_lengkap !== null ? pelanggan.nama_lengkap : 'Tambah Pelanggan'}</Text>
           </TouchableOpacity>
         </View>
         {/* list transaksi produk cart */}
@@ -629,7 +654,7 @@ export default function Home({ navigation, route }) {
             flexDirection: 'row',
             // borderBottomWidth: 1,
           }}>
-            <TouchableOpacity style={{
+            {/* <TouchableOpacity style={{
               flex: 0,
               backgroundColor: '#C59262',
               paddingVertical: 20,
@@ -645,7 +670,7 @@ export default function Home({ navigation, route }) {
                 fontSize: myDimensi / 3,
                 color: colors.white
               }}>Pisah Bill</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity
               onPress={() => {
                 const dd = {
@@ -656,6 +681,8 @@ export default function Home({ navigation, route }) {
                   persen_voucher: 0,
                   diskon_member: 0,
                   persen_member: 0,
+                  jenis: jenis,
+                  fid_pelanggan: pelanggan.id_pelanggan
 
 
                 }
@@ -689,6 +716,81 @@ export default function Home({ navigation, route }) {
         </View>
       </View>
 
+      {/* modal  */}
+
+      {bukapelanggan && (
+        <View style={{
+          position: 'absolute',
+          height: windowWidth / 2,
+          padding: 10,
+          backgroundColor: colors.white,
+          width: windowWidth,
+        }}>
+          <View style={{
+            flexDirection: 'row'
+          }}>
+            <Text style={{
+              flex: 1,
+              fontFamily: fonts.primary.normal,
+              fontSize: myDimensi / 3,
+              color: colors.primary
+            }}>
+              Pilih Pelanggan
+            </Text>
+            <TouchableOpacity onPress={() => setBukaPelanggan(false)}>
+              <Icon type='ionicon' name='close' color={colors.primary} size={30} />
+            </TouchableOpacity>
+          </View>
+          <MyInput nolabel placeholder="Cari pelanggan" onChangeText={x => {
+
+            const filtered = dataPelanggan.filter(i => i.nama_lengkap.toLowerCase().indexOf(x.toLowerCase()) > -1)
+            console.log(x.length)
+            if (x.length == 0) {
+              getPelanggan();
+            } else {
+              setDataPelanggan(filtered);
+            }
+
+          }} />
+          <MyGap jarak={10} />
+          <ScrollView>
+            {dataPelanggan.map(item => {
+              return (
+                <TouchableOpacity onPress={() => {
+                  setPelanggan(item);
+                  setBukaPelanggan(false);
+                }} style={{
+                  marginHorizontal: 10,
+                  marginVertical: 10,
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.border_form,
+                  flexDirection: 'row'
+                }}>
+                  <View style={{
+                    flex: 1,
+                  }}>
+                    <Text style={{
+                      fontFamily: fonts.primary[600],
+                      fontSize: myDimensi / 3,
+                      color: colors.black
+                    }}>{item.nama_lengkap}</Text>
+                    <Text style={{
+                      fontFamily: fonts.primary.normal,
+                      fontSize: myDimensi / 3,
+                      color: colors.black
+                    }}>{item.telepon}</Text>
+                  </View>
+
+
+                  <Icon type='ionicon' name='chevron-forward' color={colors.primary} size={30} />
+
+
+                </TouchableOpacity>
+              )
+            })}
+          </ScrollView>
+        </View>
+      )}
 
     </SafeAreaView>
   )

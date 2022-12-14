@@ -17,7 +17,7 @@ import { Icon } from 'react-native-elements';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useIsFocused } from '@react-navigation/native';
 import axios from 'axios';
-
+import RNPrint from 'react-native-print';
 export default function Account({ navigation, route }) {
     const [user, setUser] = useState({});
     const [com, setCom] = useState({});
@@ -130,6 +130,28 @@ export default function Account({ navigation, route }) {
 
                 </View>
             </>}
+
+            <View style={{
+                flexDirection: 'row'
+            }}>
+                <View style={{
+                    flex: 1,
+                    paddingHorizontal: 10,
+                }}>
+                    <MyButton Icons="bluetooth" title="Atur printer Bluetooth" warna={colors.primary} onPress={() => {
+                        navigation.navigate('PrinterBluetooth')
+                    }} />
+                </View>
+                <View style={{
+                    flex: 1,
+                    paddingHorizontal: 10,
+                }}>
+                    <MyButton Icons="wifi" title="Atur printer Jaringan" warna={colors.danger} onPress={() => {
+                        navigation.navigate('PrinterNetwork')
+                    }} />
+                </View>
+            </View>
+
         </SafeAreaView >
     );
 }
