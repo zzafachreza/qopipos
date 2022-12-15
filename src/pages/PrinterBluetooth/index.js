@@ -25,7 +25,7 @@ import {
 import { TouchableOpacity } from 'react-native';
 import { FlatList } from 'react-native';
 import { fonts, myDimensi } from '../../utils/fonts';
-import { storeData } from '../../utils/localStorage';
+import { getData, storeData } from '../../utils/localStorage';
 import { MyButton } from '../../components';
 
 export default function PrinterBluetooth() {
@@ -33,16 +33,20 @@ export default function PrinterBluetooth() {
     const [paired, setPaired] = useState({
         device_name: '',
         inner_mac_address: ''
-
-    })
+    });
 
 
     useEffect(() => {
 
-        NetPrinter.init().then(() => {
-            NetPrinter.connectPrinter('192.168.0.77', 9100).then(res => {
-                console.log(res)
-            })
+        getData('paired').then(res => {
+            if (!res) {
+                setPaired({
+                    device_name: '',
+                    inner_mac_address: ''
+                })
+            } else {
+                setPaired(res)
+            }
         })
 
         BLEPrinter.init().then(() => {
@@ -99,7 +103,15 @@ export default function PrinterBluetooth() {
                         let columnWidths = [8, 20, 20];
                         try {
 
-                            await NetPrinter.printBill("<C>QOPI POS by ZAVALABS</C>\n<C>================</C>\n<C>Test Print Berhasil</C>\n\n");
+                            // NetPrinter.init().then(async () => {
+                            //     NetPrinter.connectPrinter('192.168.0.77', 9100).then(async res => {
+                            //         await NetPrinter.printBill("<C>QOPI POS by ZAVALABS</C>\n<C>================</C>\n<C>Test Print Berhasil</C>\n\n");
+
+                            //         await NetPrinter.printBill("<C>QOPI POS by ZAVALABS</C>\n<C>================</C>\n<C>Test Print Berhasil</C>\n\n");
+
+                            //     })
+                            // })
+
 
                             await BluetoothEscposPrinter.printText('\r\n\r\n\r\n', {});
                             // await BluetoothEscposPrinter.printPic(logoCetak, { width: 250, left: 150 });

@@ -29,19 +29,61 @@ import { Modalize } from 'react-native-modalize';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { color } from 'react-native-elements/dist/helpers';
 
+// printer
+
+
+import {
+    USBPrinter,
+    NetPrinter,
+    BLEPrinter,
+} from "react-native-thermal-receipt-printer";
+
+import { BluetoothEscposPrinter, BluetoothManager } from 'react-native-bluetooth-escpos-printer';
+
+
 export default function TransactionDetail({ navigation, route }) {
+
+    const [paired, setPaired] = useState({
+        device_name: '',
+        inner_mac_address: ''
+    });
+
+    const [pairednet, setPairednet] = useState('');
 
 
     const [loading, setLoading] = useState(false);
 
     const isFocused = useIsFocused();
     const [user, setUser] = useState({});
+    const [pos, setPOS] = useState({});
 
     useEffect(() => {
         if (isFocused) {
+
+            getData('paired').then(res => {
+                if (!res) {
+                    setPaired({
+                        device_name: '',
+                        inner_mac_address: ''
+                    })
+                } else {
+                    setPaired(res)
+                }
+            })
+
+            getData('pairednet').then(res => {
+                if (!res) {
+                    setPairednet('000.000.000')
+                } else {
+                    setPairednet(res)
+                }
+            })
+
+
             __getTransaction(route.params.inv);
             __getTransactionDetail(route.params.inv);
             __getTransactionStatus(route.params.inv);
+            __getTransactionPOS(route.params.inv)
         }
 
 
@@ -51,6 +93,133 @@ export default function TransactionDetail({ navigation, route }) {
 
 
     const printData = async () => {
+
+        BluetoothManager.connect(paired.inner_mac_address)
+            .then(async (s) => {
+                console.log(s);
+                let columnWidths = [8, 20, 20];
+                try {
+
+                    NetPrinter.init().then(async () => {
+                        NetPrinter.connectPrinter(pairednet, 9100).then(async res => {
+
+                            detail.map(item => {
+
+                                NetPrinter.printBill(`Order ID : ${header.inv}\n${item.nama_barang}\n${item.ukuran} ${item.ukuran}, ${item.suhu} ${item.data_topping == '' ? '' : ', ' + item.data_topping} ${item.catatan !== '' ? ', ' + item.catatan : ''}\n${header.tanggal_jam}`);
+
+
+
+                            })
+
+                        })
+                    })
+
+
+                    await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
+                    await BluetoothEscposPrinter.setBlob(0);
+                    await BluetoothEscposPrinter.printText("" + header.nama_outlet + "\n\r", {
+                        encoding: 'GBK',
+                        codepage: 0,
+                        widthtimes: 1,
+                        heigthtimes: 1,
+                        fonttype: 1
+                    });
+                    await BluetoothEscposPrinter.setBlob(0);
+                    await BluetoothEscposPrinter.printText("" + header.alamat_outlet + "\n\r", {
+                        encoding: 'GBK',
+                        codepage: 0,
+                        widthtimes: 0,
+                        heigthtimes: 0,
+                        fonttype: 1
+                    });
+                    await BluetoothEscposPrinter.printText("--------------------------------\n\r", {});
+                    await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
+                    await BluetoothEscposPrinter.setBlob(0);
+                    await BluetoothEscposPrinter.printText("" + header.inv + "\n\r", {});
+                    await BluetoothEscposPrinter.printText("" + header.tanggal_jam + "\n\r", {});
+                    await BluetoothEscposPrinter.setBlob(0);
+                    await BluetoothEscposPrinter.printColumn([12, 6, 12],
+                        [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                        ["Customer", ':', pos.nama_lengkap], {});
+                    await BluetoothEscposPrinter.setBlob(0);
+                    await BluetoothEscposPrinter.printText("--------------------------------\n\r", {});
+                    await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
+                    await BluetoothEscposPrinter.setBlob(0);
+                    await BluetoothEscposPrinter.printText("*" + pos.jenis + "*\n\r", {});
+                    // product detail
+                    await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
+
+                    detail.map(item => {
+                        BluetoothEscposPrinter.printColumn([19, 13],
+                            [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                            ["" + item.qty + "x " + item.nama_barang, `@${new Intl.NumberFormat().format(item.total)}`], {
+                            codepage: 0,
+                            widthtimes: 0,
+                            heigthtimes: 0,
+
+                        });
+                        BluetoothEscposPrinter.printText(`${item.ukuran} ${item.ukuran}, ${item.suhu} ${item.data_topping == '' ? '' : ', ' + item.data_topping} ${item.catatan !== '' ? ', ' + item.catatan : ''} \n\r`, {
+                            fonttype: 2,
+                        });
+
+                    })
+
+                    // last product
+                    await BluetoothEscposPrinter.printText("--------------------------------\n\r", {});
+                    BluetoothEscposPrinter.printColumn([19, 13],
+                        [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                        ["Subtotal", `@${new Intl.NumberFormat().format(header.total_biaya)}`], {
+                        codepage: 0,
+                        widthtimes: 0,
+                        heigthtimes: 0,
+
+                    });
+                    BluetoothEscposPrinter.printColumn([19, 13],
+                        [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                        ["PPN (Included)", ``], {
+                        codepage: 0,
+                        widthtimes: 0,
+                        heigthtimes: 0,
+
+                    });
+                    await BluetoothEscposPrinter.printText("--------------------------------\n\r", {});
+                    BluetoothEscposPrinter.printColumn([19, 13],
+                        [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                        ["Metode Pembayaran", `${header.pembayaran}`], {
+                        codepage: 0,
+                        widthtimes: 0,
+                        heigthtimes: 0,
+
+                    });
+                    BluetoothEscposPrinter.printColumn([19, 13],
+                        [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                        ["Total", `@${new Intl.NumberFormat().format(header.total_bayar)}`], {
+                        codepage: 0,
+                        widthtimes: 0,
+                        heigthtimes: 0,
+
+                    });
+                    await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER)
+                    await BluetoothEscposPrinter.printQRCode(
+                        'https://qp-coffee.com/',
+                        280,
+                        BluetoothEscposPrinter.ERROR_CORRECTION.L,
+                    );
+
+                    await BluetoothEscposPrinter.printText('\r\n\r\n', {});
+                } catch (e) {
+                    alert(e.message || 'ERROR');
+                }
+
+
+
+            }, (e) => {
+                this.setState({
+                    loading: false
+                })
+                alert(e);
+            })
+
 
     }
 
@@ -62,6 +231,17 @@ export default function TransactionDetail({ navigation, route }) {
         }).then(res => {
             // console.log(res.data);
             setHeader(res.data);
+
+        });
+    }
+
+    const __getTransactionPOS = (inv) => {
+        axios.post(apiURL + 'v1_history_detail_pos.php', {
+            inv: inv,
+            api_token: urlToken
+        }).then(res => {
+            console.log('POST', res.data);
+            setPOS(res.data);
 
         });
     }
@@ -260,6 +440,35 @@ export default function TransactionDetail({ navigation, route }) {
                             flex: 1,
                             fontFamily: fonts.secondary[400],
                             fontSize: myDimensi / 4
+                        }}>Jenis Transaksi</Text>
+                        <Text style={{
+                            fontFamily: fonts.secondary[400],
+                            fontSize: myDimensi / 4
+                        }}>{pos.jenis}</Text>
+                    </View>
+                    <View style={{
+                        flexDirection: 'row',
+                        marginVertical: 5,
+                    }}>
+                        <Text style={{
+                            flex: 1,
+                            fontFamily: fonts.secondary[400],
+                            fontSize: myDimensi / 4
+                        }}>Pelanggan</Text>
+                        <Text style={{
+                            fontFamily: fonts.secondary[400],
+                            fontSize: myDimensi / 4
+                        }}>{pos.nama_lengkap} / {pos.telepon}</Text>
+                    </View>
+
+                    <View style={{
+                        flexDirection: 'row',
+                        marginVertical: 5,
+                    }}>
+                        <Text style={{
+                            flex: 1,
+                            fontFamily: fonts.secondary[400],
+                            fontSize: myDimensi / 4
                         }}>Tanggal Transaksi</Text>
                         <Text style={{
                             fontFamily: fonts.secondary[400],
@@ -447,7 +656,7 @@ export default function TransactionDetail({ navigation, route }) {
                             Rp. {new Intl.NumberFormat().format(header.total_biaya)}
                         </Text>
                     </View>
-                    <View style={{
+                    {/* <View style={{
                         flexDirection: 'row',
                         marginVertical: 5,
                     }}>
@@ -484,7 +693,7 @@ export default function TransactionDetail({ navigation, route }) {
                             }}>
                             Rp. {new Intl.NumberFormat().format(header.diskon_voucher)}
                         </Text>
-                    </View>
+                    </View> */}
                     <View style={{
                         flexDirection: 'row',
                         marginVertical: 5,
