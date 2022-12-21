@@ -117,13 +117,8 @@ export default function TransactionDetail({ navigation, route }) {
 
                     await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
                     await BluetoothEscposPrinter.setBlob(0);
-                    await BluetoothEscposPrinter.printText("" + header.nama_outlet + "\n\r", {
-                        encoding: 'GBK',
-                        codepage: 0,
-                        widthtimes: 1,
-                        heigthtimes: 1,
-                        fonttype: 1
-                    });
+                    await BluetoothEscposPrinter.printText("" + header.nama_outlet + "\n\r", {});
+
                     await BluetoothEscposPrinter.setBlob(0);
                     await BluetoothEscposPrinter.printText("" + header.alamat_outlet + "\n\r", {
                         encoding: 'GBK',
@@ -199,6 +194,25 @@ export default function TransactionDetail({ navigation, route }) {
                         heigthtimes: 0,
 
                     });
+
+                    if (header.pembayaran == 'Tunai') {
+                        BluetoothEscposPrinter.printColumn([19, 13],
+                            [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                            ["Bayar", `@${new Intl.NumberFormat().format(header.bayar)}`], {
+                            codepage: 0,
+                            widthtimes: 0,
+                            heigthtimes: 0,
+
+                        });
+                        BluetoothEscposPrinter.printColumn([19, 13],
+                            [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
+                            ["Kembalian", `@${new Intl.NumberFormat().format(header.kembalian)}`], {
+                            codepage: 0,
+                            widthtimes: 0,
+                            heigthtimes: 0,
+
+                        });
+                    }
                     await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER)
                     await BluetoothEscposPrinter.printQRCode(
                         'https://qp-coffee.com/',
@@ -656,6 +670,7 @@ export default function TransactionDetail({ navigation, route }) {
                             Rp. {new Intl.NumberFormat().format(header.total_biaya)}
                         </Text>
                     </View>
+
                     {/* <View style={{
                         flexDirection: 'row',
                         marginVertical: 5,
@@ -711,6 +726,46 @@ export default function TransactionDetail({ navigation, route }) {
                                 fontSize: myDimensi / 4,
                             }}>
                             Rp. {new Intl.NumberFormat().format(header.total_bayar)}
+                        </Text>
+                    </View>
+
+
+                    <View style={{
+                        flexDirection: 'row',
+                        marginVertical: 5,
+                    }}>
+                        <Text style={{
+                            flex: 1,
+                            fontFamily: fonts.secondary[400],
+                            fontSize: myDimensi / 4
+                        }}>Bayar Tunai</Text>
+                        <Text
+                            style={{
+
+                                fontFamily: fonts.primary[600],
+                                color: colors.black,
+                                fontSize: myDimensi / 4,
+                            }}>
+                            Rp. {new Intl.NumberFormat().format(header.bayar)}
+                        </Text>
+                    </View>
+                    <View style={{
+                        flexDirection: 'row',
+                        marginVertical: 5,
+                    }}>
+                        <Text style={{
+                            flex: 1,
+                            fontFamily: fonts.secondary[400],
+                            fontSize: myDimensi / 4
+                        }}>Kembalian</Text>
+                        <Text
+                            style={{
+
+                                fontFamily: fonts.primary[600],
+                                color: colors.black,
+                                fontSize: myDimensi / 4,
+                            }}>
+                            Rp. {new Intl.NumberFormat().format(header.kembalian)}
                         </Text>
                     </View>
 

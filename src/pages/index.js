@@ -15,6 +15,7 @@ import Payment from './Payment';
 import TransactionDetail from './TransactionDetail';
 import PrinterBluetooth from './PrinterBluetooth';
 import PrinterNetwork from './PrinterNetwork';
+import PaymentCash from './PaymentCash';
 
 
 
@@ -37,6 +38,7 @@ export {
   CartEdit,
   Payment,
   PrinterBluetooth,
-  PrinterNetwork
+  PrinterNetwork,
+  PaymentCash
 
 };

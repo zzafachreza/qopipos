@@ -17,14 +17,15 @@ import { TextInput } from 'react-native';
 export default function Home({ navigation, route }) {
   const [modalProduct, setModalProduct] = useState(false);
   const [bukapelanggan, setBukaPelanggan] = useState(false);
+  const [bukantunai, setBukaTunai] = useState(false);
   const [user, setUser] = useState({});
   const [jenis, setJenis] = useState('Dine in');
   const [pelanggan, setPelanggan] = useState({
-    nama_lengkap: null,
+    nama_lengkap: 'General Customer',
     email: null,
     alamat: null,
     telepon: null,
-    id_pelanggan: null,
+    id_pelanggan: 0,
   });
   const [dataPelanggan, setDataPelanggan] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -89,11 +90,12 @@ export default function Home({ navigation, route }) {
       getData('user').then(u => {
         setUser(u)
         __getDataBarang(u.id);
+        getPelanggan();
+        getProduk(0, '', u.tipe_harga);
+        getKategori(u.tipe_harga);
       });
     }
-    getPelanggan();
-    getProduk();
-    getKategori();
+
   }, [isFocused]);
 
 
@@ -150,12 +152,13 @@ export default function Home({ navigation, route }) {
 
   var totalBiaya = 0;
 
-  const getProduk = (x = 2, key) => {
+  const getProduk = (x = 2, key, tipe_harga = user.tipe_harga) => {
     setLoading(true);
     axios.post(apiURL + 'v1_produk.php', {
       api_token: urlToken,
       fid_kategori: x,
-      key: key
+      key: key,
+      tipe_harga: tipe_harga
     }).then(res => {
       setLoading(false);
       setProduk(res.data);
@@ -294,7 +297,7 @@ export default function Home({ navigation, route }) {
             </Text>
           }
           <View style={{
-            flex: 1,
+            flex: 2,
           }}>
 
             <Text style={{
@@ -494,7 +497,7 @@ export default function Home({ navigation, route }) {
         <MyInput onSubmitEditing={x => {
           console.warn(x.nativeEvent.text);
           setOpenKategori(false);
-          getProduk(0, x.nativeEvent.text);
+          getProduk(0, x.nativeEvent.text, user.tipe_harga);
         }} nolabel placeholder="Pencarian" paddingLeft={20} iconLeft={false} iconname='search' />
 
         {/* menu */}
@@ -612,10 +615,18 @@ export default function Home({ navigation, route }) {
 
         {/* ditail */}
         <View style={{
-          flex: 0.5,
+          // flex: 0.5,
+
           backgroundColor: colors.border_card
         }}>
-          <View style={{
+          <Text style={{
+            margin: 10,
+            textAlign: 'right',
+            fontFamily: fonts.primary[600],
+            fontSize: myDimensi / 3,
+            color: colors.black
+          }}>Rp. {new Intl.NumberFormat().format(total)}</Text>
+          {/* <View style={{
             flexDirection: 'row',
           }}>
             <TouchableOpacity style={{
@@ -649,13 +660,33 @@ export default function Home({ navigation, route }) {
                 color: colors.primary
               }}>Catak Bill</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
           <View style={{
             flexDirection: 'row',
             // borderBottomWidth: 1,
           }}>
-            {/* <TouchableOpacity style={{
-              flex: 0,
+            <TouchableOpacity onPress={() => {
+
+              setBukaTunai(true);
+              const dd = {
+                fid_user: user.id,
+                fid_outlet: user.fid_outlet,
+                harga_total: total,
+                diskon_voucher: 0,
+                persen_voucher: 0,
+                diskon_member: 0,
+                persen_member: 0,
+                pembayaran: 'Tunai',
+                bayar: 0,
+                kembalian: 0,
+                jenis: jenis,
+                fid_pelanggan: pelanggan.id_pelanggan
+
+
+              }
+              navigation.navigate('PaymentCash', dd)
+            }} style={{
+              flex: 1,
               backgroundColor: '#C59262',
               paddingVertical: 20,
               paddingHorizontal: 20,
@@ -663,14 +694,14 @@ export default function Home({ navigation, route }) {
               alignItems: 'center',
               flexDirection: 'row'
             }}>
-              <Icon size={myDimensi / 3} name='documents' type='ionicon' color={colors.white} />
+              <Icon size={myDimensi / 3} name='cash' type='ionicon' color={colors.white} />
               <Text style={{
                 left: 5,
                 fontFamily: fonts.primary.normal,
                 fontSize: myDimensi / 3,
                 color: colors.white
-              }}>Pisah Bill</Text>
-            </TouchableOpacity> */}
+              }}>Tunai</Text>
+            </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
                 const dd = {
@@ -710,7 +741,7 @@ export default function Home({ navigation, route }) {
                 fontFamily: fonts.primary.normal,
                 fontSize: myDimensi / 3,
                 color: colors.white
-              }}>Bayar Rp. {new Intl.NumberFormat().format(total)}</Text>
+              }}>Non Tunai</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -791,6 +822,11 @@ export default function Home({ navigation, route }) {
           </ScrollView>
         </View>
       )}
+
+
+
+      {/* modal  */}
+
 
     </SafeAreaView>
   )

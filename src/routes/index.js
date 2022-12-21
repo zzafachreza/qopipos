@@ -24,7 +24,8 @@ import {
   Payment,
   TransactionDetail,
   PrinterBluetooth,
-  PrinterNetwork
+  PrinterNetwork,
+  PaymentCash
 } from '../pages';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BottomNavigator } from '../components';
@@ -71,6 +72,17 @@ export default function Router() {
         component={GetStarted}
         options={{
           headerShown: false,
+        }}
+      />
+
+
+
+      <Stack.Screen
+        name="PaymentCash"
+        component={PaymentCash}
+        options={{
+          headerShown: true,
+          title: 'Tunai'
         }}
       />
 
