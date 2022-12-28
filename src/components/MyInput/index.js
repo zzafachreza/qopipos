@@ -14,6 +14,7 @@ export default function MyInput({
   keyboardType,
   secureTextEntry,
   styleInput,
+  borderColor = colors.border_form,
   placeholder,
   autoFocus,
   multiline,
@@ -52,7 +53,7 @@ export default function MyInput({
           keyboardType={keyboardType}
           style={{
             borderWidth: 1,
-            borderColor: colors.border_form,
+            borderColor: borderColor,
             borderRadius: 10,
             height: height,
             fontSize: myDimensi / 5,

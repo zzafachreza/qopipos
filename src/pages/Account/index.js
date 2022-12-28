@@ -10,7 +10,7 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { windowWidth, fonts } from '../../utils/fonts';
-import { getData, storeData, urlAPI, urlApp, urlAvatar } from '../../utils/localStorage';
+import { apiURL, getData, storeData, urlAPI, urlApp, urlAvatar, webURL } from '../../utils/localStorage';
 import { colors } from '../../utils/colors';
 import { MyButton, MyGap } from '../../components';
 import { Icon } from 'react-native-elements';
@@ -22,8 +22,9 @@ export default function Account({ navigation, route }) {
     const [user, setUser] = useState({});
     const [com, setCom] = useState({});
     const isFocused = useIsFocused();
-    const [wa, setWA] = useState('');
+    const [status, setStatus] = useState('');
     const [open, setOpen] = useState(false);
+    const [token, setToken] = useState('');
 
 
 
@@ -35,8 +36,19 @@ export default function Account({ navigation, route }) {
 
                 setOpen(true);
                 setUser(res);
+                axios.post(webURL + 'api_outlet_cek', {
+                    fid_user: res.id
+                }).then(x => {
+                    console.log(x.data);
+                    setStatus(x.data);
+                })
 
             });
+
+            getData('token').then(x => {
+                console.log(x.token);
+                setToken(x.token);
+            })
         }
 
 
@@ -149,6 +161,52 @@ export default function Account({ navigation, route }) {
                     <MyButton Icons="wifi" title="Atur printer Jaringan" warna={colors.danger} onPress={() => {
                         navigation.navigate('PrinterNetwork')
                     }} />
+                </View>
+                <View style={{
+                    flex: 1,
+                    paddingHorizontal: 10,
+                }}>
+                    {status == 'MATI' && <MyButton Icons="notifications" title="Atur Notifikasi" warna={colors.secondary} onPress={() => {
+                        Alert.alert('Qopi POS', 'Akfifkan Notifikasi ?', [
+                            {
+                                text: "TIDAK",
+                            },
+                            {
+                                text: "AKTIFKAN NOTIFIKASI",
+                                onPress: () => {
+                                    // console.log(token);
+                                    axios.post(webURL + 'api_outlet', {
+                                        fid_user: user.id,
+                                        fid_outlet: user.fid_outlet,
+                                        token: token
+                                    }).then(res => {
+                                        console.log(res.data);
+                                        setStatus('AKTIF')
+                                    })
+                                }
+                            }
+                        ])
+                    }} />}
+
+                    {status == 'AKTIF' && <MyButton Icons="notifications" title="Matikan Notifikasi" warna={colors.border} onPress={() => {
+                        Alert.alert('Qopi POS', 'Matikan Notifikasi ?', [
+                            {
+                                text: "TIDAK",
+                            },
+                            {
+                                text: "MATIKAN NOTIFIKASI",
+                                onPress: () => {
+                                    // console.log(token);
+                                    axios.post(webURL + 'api_outlet_delete', {
+                                        fid_user: user.id,
+                                    }).then(res => {
+                                        console.log(res.data);
+                                        setStatus('MATI')
+                                    })
+                                }
+                            }
+                        ])
+                    }} />}
                 </View>
             </View>
 

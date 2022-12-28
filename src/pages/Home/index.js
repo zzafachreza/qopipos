@@ -9,10 +9,10 @@ import 'intl';
 import 'intl/locale-data/jsonp/en';
 import Modal from 'react-native-modal'
 import { MyButton, MyGap, MyInput } from '../../components';
-
 import { useIsFocused } from '@react-navigation/native';
 import { TextInput } from 'react-native';
-
+import messaging from '@react-native-firebase/messaging';
+import PushNotification from 'react-native-push-notification';
 
 export default function Home({ navigation, route }) {
   const [modalProduct, setModalProduct] = useState(false);
@@ -86,6 +86,7 @@ export default function Home({ navigation, route }) {
 
   useEffect(() => {
 
+
     if (isFocused) {
       getData('user').then(u => {
         setUser(u)
@@ -95,6 +96,7 @@ export default function Home({ navigation, route }) {
         getKategori(u.tipe_harga);
       });
     }
+
 
   }, [isFocused]);
 

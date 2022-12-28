@@ -51,7 +51,7 @@ export default function TransactionDetail({ navigation, route }) {
     const [pairednet, setPairednet] = useState('');
 
 
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const isFocused = useIsFocused();
     const [user, setUser] = useState({});
@@ -135,12 +135,17 @@ export default function TransactionDetail({ navigation, route }) {
                     await BluetoothEscposPrinter.setBlob(0);
                     await BluetoothEscposPrinter.printColumn([12, 6, 12],
                         [BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.LEFT, BluetoothEscposPrinter.ALIGN.RIGHT],
-                        ["Customer", ':', pos.nama_lengkap], {});
+                        ["Customer", ':', header.tipe == "KASIR" ? `${pos.nama_lengkap}` : `${header.nama_lengkap.toString().substr(0, 10)}`], {});
                     await BluetoothEscposPrinter.setBlob(0);
                     await BluetoothEscposPrinter.printText("--------------------------------\n\r", {});
                     await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
-                    await BluetoothEscposPrinter.setBlob(0);
-                    await BluetoothEscposPrinter.printText("*" + pos.jenis + "*\n\r", {});
+
+                    if (header.tipe == "KASIR") {
+                        await BluetoothEscposPrinter.printText("*" + pos.jenis + "*\n\r", {});
+                    } else {
+                        await BluetoothEscposPrinter.printText("*E-Commerce*\n\r", {});
+                    }
+
                     // product detail
                     await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
 
@@ -243,6 +248,7 @@ export default function TransactionDetail({ navigation, route }) {
             inv: inv,
             api_token: urlToken
         }).then(res => {
+            setLoading(false);
             // console.log(res.data);
             setHeader(res.data);
 
@@ -417,7 +423,7 @@ export default function TransactionDetail({ navigation, route }) {
             flex: 1,
             backgroundColor: colors.border_form,
         }}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            {!loading && <ScrollView showsVerticalScrollIndicator={false}>
 
                 <View style={{
                     backgroundColor: colors.white,
@@ -458,7 +464,7 @@ export default function TransactionDetail({ navigation, route }) {
                         <Text style={{
                             fontFamily: fonts.secondary[400],
                             fontSize: myDimensi / 4
-                        }}>{pos.jenis}</Text>
+                        }}>{header.tipe == "KASIR" ? pos.jenis : 'E - COMMERECE'}</Text>
                     </View>
                     <View style={{
                         flexDirection: 'row',
@@ -472,7 +478,7 @@ export default function TransactionDetail({ navigation, route }) {
                         <Text style={{
                             fontFamily: fonts.secondary[400],
                             fontSize: myDimensi / 4
-                        }}>{pos.nama_lengkap} / {pos.telepon}</Text>
+                        }}>{header.tipe == "KASIR" ? `${pos.nama_lengkap} / ${pos.telepon}` : `${header.nama_lengkap} / ${header.telepon}`}</Text>
                     </View>
 
                     <View style={{
@@ -672,43 +678,43 @@ export default function TransactionDetail({ navigation, route }) {
                     </View>
 
                     {/* <View style={{
-                        flexDirection: 'row',
-                        marginVertical: 5,
-                    }}>
-                        <Text style={{
-                            flex: 1,
-                            fontFamily: fonts.secondary[400],
-                            fontSize: myDimensi / 4
-                        }}>Diskon Member</Text>
-                        <Text
-                            style={{
+        flexDirection: 'row',
+        marginVertical: 5,
+    }}>
+        <Text style={{
+            flex: 1,
+            fontFamily: fonts.secondary[400],
+            fontSize: myDimensi / 4
+        }}>Diskon Member</Text>
+        <Text
+            style={{
 
-                                fontFamily: fonts.primary[400],
-                                color: colors.border_label,
-                                fontSize: myDimensi / 4,
-                            }}>
-                            Rp. {new Intl.NumberFormat().format(header.diskon_member)}
-                        </Text>
-                    </View>
-                    <View style={{
-                        flexDirection: 'row',
-                        marginVertical: 5,
-                    }}>
-                        <Text style={{
-                            flex: 1,
-                            fontFamily: fonts.secondary[400],
-                            fontSize: myDimensi / 4
-                        }}>Diskon Voucher</Text>
-                        <Text
-                            style={{
+                fontFamily: fonts.primary[400],
+                color: colors.border_label,
+                fontSize: myDimensi / 4,
+            }}>
+            Rp. {new Intl.NumberFormat().format(header.diskon_member)}
+        </Text>
+    </View>
+    <View style={{
+        flexDirection: 'row',
+        marginVertical: 5,
+    }}>
+        <Text style={{
+            flex: 1,
+            fontFamily: fonts.secondary[400],
+            fontSize: myDimensi / 4
+        }}>Diskon Voucher</Text>
+        <Text
+            style={{
 
-                                fontFamily: fonts.primary[400],
-                                color: colors.border_label,
-                                fontSize: myDimensi / 4,
-                            }}>
-                            Rp. {new Intl.NumberFormat().format(header.diskon_voucher)}
-                        </Text>
-                    </View> */}
+                fontFamily: fonts.primary[400],
+                color: colors.border_label,
+                fontSize: myDimensi / 4,
+            }}>
+            Rp. {new Intl.NumberFormat().format(header.diskon_voucher)}
+        </Text>
+    </View> */}
                     <View style={{
                         flexDirection: 'row',
                         marginVertical: 5,
@@ -775,14 +781,22 @@ export default function TransactionDetail({ navigation, route }) {
 
 
 
-            </ScrollView>
+            </ScrollView>}
+
+            {loading && <View style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: colors.white
+            }}>
+                <ActivityIndicator size="large" color={colors.primary} />
+            </View>}
 
             <View style={{
                 padding: 10,
                 backgroundColor: colors.white
             }}>
                 {!loading && <MyButton onPress={printData} title="Print Pesanan" Icons="print-outline" warna={colors.primary} />}
-                {loading && <ActivityIndicator size="large" color={colors.primary} />}
             </View>
 
 
